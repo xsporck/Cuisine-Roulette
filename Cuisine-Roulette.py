@@ -12,8 +12,7 @@ import ssl
 import json
 import requests
 from pprint import pprint
-
-from __future__ import print_function
+#from __future__ import print_function
 
 import argparse
 import json
@@ -47,10 +46,6 @@ API_KEY= None
 API_HOST = 'https://api.yelp.com'
 SEARCH_PATH = '/v3/businesses/search'
 BUSINESS_PATH = '/v3/businesses/'  # Business ID will come after slash.
-
-
-
-
 
 
 load_dotenv() # invokes / uses the function we got from the third-party package. this one happens to read env vars from the ".env" file. see the "python-dotenv" package docs for more info
