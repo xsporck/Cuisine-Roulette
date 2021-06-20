@@ -48,7 +48,7 @@ USER_NAME = os.getenv("USER_NAME")
 API_KEY = os.getenv("API_KEY")
 
 print("Hello " + USER_NAME + ", welcome to Cuisine Roulette!")
-print("We'll find you a restaurant based on your cuisine and location!")
+print("We'll find you a restaurant based on your desired cuisine and location!")
 print()
 
 # API constants, you shouldn't have to change these.
@@ -139,6 +139,18 @@ def query_api(Cuisine_Name, Address):
     response = get_business(API_KEY, business_id)
 
     print(u'Result for business "{0}" found:'.format(business_id))
+    pprint.pprint(response, indent=2)
+    
+    business_id2 = businesses[1]['id']
+
+    print()
+    print()
+    print(u'{0} businesses found, querying business info ' \
+        'for the second result "{1}" ...'.format(
+            len(businesses), business_id2))
+    response = get_business(API_KEY, business_id2)
+
+    print(u'Result for business "{0}" found:'.format(business_id2))
     pprint.pprint(response, indent=2)
 
 
