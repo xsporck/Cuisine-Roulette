@@ -5,14 +5,14 @@
 import random
 import os
 from dotenv import load_dotenv
-from dotenv.main import DotEnv
+#from dotenv.main import DotEnv
 from datetime import datetime
 import smtplib
 import ssl
 import json
-import requests
 from pprint import pprint
-#from __future__ import print_function
+
+#from _future_ import print_function
 
 import argparse
 import json
@@ -20,6 +20,7 @@ import pprint
 import requests
 import sys
 import urllib
+
 
 # This client code can run on Python 2.x or 3.x.  Your imports can be
 # simpler if you only need one of those.
@@ -39,28 +40,28 @@ except ImportError:
 # It now uses private keys to authenticate requests (API Key)
 # You can find it on
 # https://www.yelp.com/developers/v3/manage_app
-API_KEY= None 
 
 
-# API constants, you shouldn't have to change these.
-API_HOST = 'https://api.yelp.com'
-SEARCH_PATH = '/v3/businesses/search'
-BUSINESS_PATH = '/v3/businesses/'  # Business ID will come after slash.
-
-
-load_dotenv() # invokes / uses the function we got from the third-party package. this one happens to read env vars from the ".env" file. see the "python-dotenv" package docs for more info
+load_dotenv() # get env files from .env file
 
 USER_NAME = os.getenv("USER_NAME")
+API_KEY = os.getenv("API_KEY")
 
 print("Hello " + USER_NAME + ", welcome to Cuisine Roulette!")
 print("We'll find you a restaurant based on your cuisine and location!")
 print()
 
+# API constants, you shouldn't have to change these.
+HOST = 'https://api.yelp.com'
+SEARCH_PATH = '/v3/businesses/search'
+BUSINESS_PATH = '/v3/businesses/'  # Business ID will come after slash.
+
 
 Cuisine_Name = input("Please input a Cuisine type: ")
 Address = input("Please input your address: ")
+SEARCH_LIMIT = 3
 
-def request(host, path, api_key, url_params=None):
+def request(HOST, SEARCH_PATH, API_KEY, url_params=None):
     """Given your API_KEY, send a GET request to the API.
     Args:
         host (str): The domain host of the API.
@@ -73,9 +74,9 @@ def request(host, path, api_key, url_params=None):
         HTTPError: An error occurs from the HTTP request.
     """
     url_params = url_params or {}
-    url = '{0}{1}'.format(host, quote(path.encode('utf8')))
+    url = '{0}{1}'.format(HOST, quote(SEARCH_PATH.encode('utf8')))
     headers = {
-        'Authorization': 'Bearer %s' % api_key,
+        'Authorization': 'Bearer %s' % API_KEY,
     }
 
     print(u'Querying {0} ...'.format(url))
@@ -84,7 +85,8 @@ def request(host, path, api_key, url_params=None):
 
     return response.json()
 
-def search(api_key, term, location):
+
+def search(API_KEY, Cuisine_Name, Address):
     """Query the Search API by a search term and location.
     Args:
         term (str): The search term passed to the API.
@@ -94,11 +96,25 @@ def search(api_key, term, location):
     """
 
     url_params = {
-        'term': term.replace(' ', '+'),
-        'location': location.replace(' ', '+'),
+        'term': Cuisine_Name.replace(' ', '+'),
+        'location': Address.replace(' ', '+'),
         'limit': SEARCH_LIMIT
     }
-    return request(API_HOST, SEARCH_PATH, api_key, url_params=url_params)
+    return request(HOST, SEARCH_PATH, API_KEY, url_params=url_params)
+
+
+
+def get_business(API_KEY, business_id):
+    """Query the Business API by a business ID.
+    Args:
+        business_id (str): The ID of the business to query.
+    Returns:
+        dict: The JSON response from the request.
+    """
+    business_path = BUSINESS_PATH + business_id
+
+    return request(HOST, business_path, API_KEY)
+
 
 
 def query_api(Cuisine_Name, Address):
@@ -124,3 +140,31 @@ def query_api(Cuisine_Name, Address):
 
     print(u'Result for business "{0}" found:'.format(business_id))
     pprint.pprint(response, indent=2)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-q', '--term', dest='term', default=Cuisine_Name,
+                        type=str, help='Search term (default: %(default)s)')
+    parser.add_argument('-l', '--location', dest='location',
+                        default=Address, type=str,
+                        help='Search location (default: %(default)s)')
+
+    input_values = parser.parse_args()
+
+    try:
+        query_api(input_values.term, input_values.location)
+    except HTTPError as error:
+        sys.exit(
+            'Encountered HTTP error {0} on {1}:\n {2}\nAbort program.'.format(
+                error.code,
+                error.url,
+                error.read(),
+            )
+        )
+
+
+if __name__ == '__main__':
+    main()
+
