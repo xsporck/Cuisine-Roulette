@@ -7,5 +7,4 @@
 # pip install pytz
 # pip install requests
 # To compile: python Cuisine-Roulette.py
-
-
+# Password to send email: vyc^Ed*el0E6
