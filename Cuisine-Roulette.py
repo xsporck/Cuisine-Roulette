@@ -180,3 +180,35 @@ def main():
 if __name__ == '__main__':
     main()
 
+
+
+
+#Gathering information to send an email receipt
+while True:
+    user_email_request = input("Do you want a response via email? [y/n]: ")
+    if user_email_request == 'y':
+        user_email = input("Please enter your email address: ")
+        #Setting up sending an email
+        port = 465  # For SSL
+        smtp_server = "smtp.gmail.com"
+        sender_email = "superdupermarketnyu@gmail.com"  
+        password = input("Type the email password and press enter: ")
+        message = """\
+        Subject: Your response from Cuisine Roulette:
+
+"""+"HERE IS THE RESPONSE"
+
+#"Checkout at: "+ dt_string+"\n"+"".join(response) +"\n SUBTOTAL: "+to_usd(Subtotal)+ "\n TAX: "+to_usd(Tax)+"\n TOTAL: "+to_usd(Total)
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, user_email, message)
+        break
+    if user_email_request == 'n':
+        print("Thanks for using Cuisine Roulette!")
+        break
+    if user_email_request not in ('y','n'):
+        print("Please input a valid response. Try Again")
+
+#Password: vyc^Ed*el0E6
