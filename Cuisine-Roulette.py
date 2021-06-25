@@ -3,18 +3,14 @@
 import random
 import os
 from dotenv import load_dotenv
-#from dotenv.main import DotEnv
-from datetime import datetime
-import smtplib
-import ssl
-import json
 from pprint import pprint
 
-#from _future_ import print_function
+import smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 import argparse
 import json
-import pprint
 import requests
 import sys
 import urllib
@@ -53,23 +49,13 @@ print('------------------------------------------')
 print()
 
 
-# API constants, you shouldn't have to change these.
-HOST = 'https://api.yelp.com'
-SEARCH_PATH = '/v3/businesses/search'
-BUSINESS_PATH = '/v3/businesses/'  # Business ID will come after slash.
-
 Address = input("Please input your address: ")
 print()
 Price = input("Please input price limits ($-$$$$):")
 
 print('------------------------------------------')
-print()
-
 price_num = str(len(Price))
-print()
-print('Is everyone in your party ready to chose a cuisine?')
-print()
-
+print('\nIs everyone in your party ready to chose a cuisine?\n')
 
 
 Cuisine_Names = []
@@ -79,7 +65,6 @@ while True:
         break
     else:
         Cuisine_Names.append(Cuisine_Name)
-
 
 
 random_choice = random.choice(Cuisine_Names)
@@ -92,6 +77,11 @@ print('Cuisine Selected: ' + Cuisine_Name)
 print()
 print('------------------------------------------')
 
+
+# API constants, you shouldn't have to change these.
+HOST = 'https://api.yelp.com'
+SEARCH_PATH = '/v3/businesses/search'
+BUSINESS_PATH = '/v3/businesses/'  # Business ID will come after slash.
 SEARCH_LIMIT = 3
 sort_by = 'rating'
 
@@ -136,7 +126,6 @@ def search(API_KEY, Cuisine_Name, Address, price_num, sort_by):
         'price': price_num.replace(' ', '+'),
         'sort by': sort_by,
         'limit': SEARCH_LIMIT
-
     }
     return request(HOST, SEARCH_PATH, API_KEY, url_params=url_params)
 
@@ -152,9 +141,6 @@ def get_business(API_KEY, business_id):
     business_path = BUSINESS_PATH + business_id
 
     return request(HOST, business_path, API_KEY)
-
-
-
 
 
 def query_api(Cuisine_Name, Address, price_num, sort_by):
@@ -173,17 +159,19 @@ def query_api(Cuisine_Name, Address, price_num, sort_by):
 
     business_id = businesses[0]['id']
 
-    response = get_business(API_KEY, business_id)
+    top_business = get_business(API_KEY, business_id)
 
-    print()
-    print('------------------------------------------')
-    print()
 
+    print('\n------------------------------------------\n')
     print('Restaurant Choice 1:  ...')
-    pprint.pprint(response, indent=2)
-    #.format(business_id)
-    Restaurant_Data = response['alias']
-    return Restaurant_Data
+    print("\nName: ", top_business['name'])
+    print("\nDisplay_address: ", top_business['location']['display_address'])
+    print("\nPhone: ", top_business['phone'])
+    print("\nRating: ", top_business['rating'])
+    print("\nUrl: ", top_business['url'])
+    
+    
+    return top_business
     
     business_id2 = businesses[1]['id']
 
@@ -198,6 +186,9 @@ def query_api(Cuisine_Name, Address, price_num, sort_by):
 
     print('Restaurant Choice 2:  ...'.format(business_id2))
     pprint.pprint(response, indent=2)
+
+    #Restaurant_Data2 = response['alias']
+    #return Restaurant_Data2
 
     business_id3 = businesses[2]['id']
 
@@ -237,8 +228,9 @@ def main():
 
     input_values = parser.parse_args()
 
+
     try:
-        Restaurant_Data = query_api(input_values.term, input_values.location, input_values.price, input_values.sort_by)
+        yelp_business = query_api(input_values.term, input_values.location, input_values.price, input_values.sort_by)
         #Gathering information to send an email receipt
         while True:
             user_email_request = input("Do you want a response via email? [y/n]: ")
@@ -249,18 +241,21 @@ def main():
                 smtp_server = "smtp.gmail.com"
                 sender_email = "superdupermarketnyu@gmail.com"  
                 password = input("Type the email password and press enter: ")
-                message = """\
-                Subject: Your response from Cuisine Roulette:
+                subject = "Cuinese Roulette's Decision"
+                message = MIMEMultipart("alternative")
+                message["Subject"] = "Cuisine Roulette's Decision!"
+                message["From"] = sender_email
+                message["To"] = user_email
+                text = """\
+Cuisine Roulette's Restaurant Choice for the Night:
 
+"""+"Restaurant Choice: "+yelp_business['name']+"\n"+"Restaurant Phone Number: "+yelp_business['phone']+"\n"+"Restaurant Rating: "+str(yelp_business['rating'])+"\n"+"Restaurant URL: "+yelp_business['url']
 
-        """+Restaurant_Data
-
-        #"Restaurant Choice: "+ Restaurant_Name +"\n"+""+"\n SUBTOTAL: "+to_usd(Subtotal)+ "\n TAX: "+to_usd(Tax)+"\n TOTAL: "+to_usd(Total)
-
+                message.attach(MIMEText(text, "plain"))
                 context = ssl.create_default_context()
                 with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
                     server.login(sender_email, password)
-                    server.sendmail(sender_email, user_email, message)
+                    server.sendmail(sender_email, user_email, message.as_string())
                 break
             if user_email_request == 'n':
                 print("Thanks for using Cuisine Roulette!")
@@ -269,6 +264,7 @@ def main():
                 print("Please input a valid response. Try Again")
 
 #Password: vyc^Ed*el0E6
+
     except HTTPError as error:
         sys.exit(
             'Encountered HTTP error {0} on {1}:\n {2}\nAbort program.'.format(
@@ -278,14 +274,5 @@ def main():
             )
         )
 
-
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
