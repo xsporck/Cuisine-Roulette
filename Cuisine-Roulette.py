@@ -40,10 +40,13 @@ load_dotenv() # get env files from .env file
 
 USER_NAME = os.getenv("USER_NAME")
 API_KEY = os.getenv("API_KEY")
+Email_Sender = os.getenv("Email_Sender")
+Email_Password = os.getenv("Email_Password")
+
 print('------------------------------------------')
 print()
 print("Hello " + USER_NAME + ", welcome to Cuisine Roulette!")
-print("We'll find you a restaurant based on your desired cuisine and location!")
+print("We'll find you and your friends a restaurant based on your desired cuisine and location!")
 print()
 print('------------------------------------------')
 print()
@@ -51,7 +54,17 @@ print()
 
 Address = input("Please input your address: ")
 print()
-Price = input("Please input price limits ($-$$$$):")
+valid_price_options = ["$", "$$", "$$$", "$$$$"]
+while True:
+    Price = input("Please input price limits ($-$$$$): ")
+    if Price in valid_price_options:
+        break
+    else:
+        if Price not in valid_price_options:
+            print("Sorry, your price limit is not valid, please try again")
+            continue
+
+
 
 print('------------------------------------------')
 price_num = str(len(Price))
@@ -61,11 +74,10 @@ print('\nIs everyone in your party ready to chose a cuisine?\n')
 Cuisine_Names = []
 while True:
     Cuisine_Name = input("Please input a Cuisine type, or 'DONE' if your whole party has voted: ")
-    if Cuisine_Name == "DONE":
+    if Cuisine_Name.upper() == "DONE":
         break
     else:
         Cuisine_Names.append(Cuisine_Name)
-
 
 random_choice = random.choice(Cuisine_Names)
 
@@ -165,50 +177,12 @@ def query_api(Cuisine_Name, Address, price_num, sort_by):
     print('\n------------------------------------------\n')
     print('Restaurant Choice 1:  ...')
     print("\nName: ", top_business['name'])
-    print("\nDisplay_address: ", top_business['location']['display_address'])
+    print("\nAddress: ", top_business['location']['display_address'])
     print("\nPhone: ", top_business['phone'])
     print("\nRating: ", top_business['rating'])
     print("\nUrl: ", top_business['url'])
-    
-    
+    print('\n------------------------------------------')
     return top_business
-    
-    business_id2 = businesses[1]['id']
-
-    print()
-    print()
-
-    response = get_business(API_KEY, business_id2)
-
-    print()
-    print('------------------------------------------')
-    print()
-
-    print('Restaurant Choice 2:  ...'.format(business_id2))
-    pprint.pprint(response, indent=2)
-
-    #Restaurant_Data2 = response['alias']
-    #return Restaurant_Data2
-
-    business_id3 = businesses[2]['id']
-
-    print()
-    print()
-
-    response = get_business(API_KEY, business_id3)
-
-    print()
-    print('------------------------------------------')
-    print()
-
-    print('Restaurant Choice 3:  ...'.format(business_id3))
-    pprint.pprint(response, indent=2)
-
-    print()
-    print('------------------------------------------')
-    print()
-    
-    restaurant_choice = get_business(API_KEY, business_id3)
     
 
 def main():
@@ -239,12 +213,10 @@ def main():
                 #Setting up sending an email
                 port = 465  # For SSL
                 smtp_server = "smtp.gmail.com"
-                sender_email = "superdupermarketnyu@gmail.com"  
-                password = input("Type the email password and press enter: ")
                 subject = "Cuinese Roulette's Decision"
                 message = MIMEMultipart("alternative")
                 message["Subject"] = "Cuisine Roulette's Decision!"
-                message["From"] = sender_email
+                message["From"] = Email_Sender
                 message["To"] = user_email
                 text = """\
 Cuisine Roulette's Restaurant Choice for the Night:
@@ -254,16 +226,14 @@ Cuisine Roulette's Restaurant Choice for the Night:
                 message.attach(MIMEText(text, "plain"))
                 context = ssl.create_default_context()
                 with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-                    server.login(sender_email, password)
-                    server.sendmail(sender_email, user_email, message.as_string())
+                    server.login(Email_Sender, Email_Password)
+                    server.sendmail(Email_Sender, user_email, message.as_string())
                 break
             if user_email_request == 'n':
                 print("Thanks for using Cuisine Roulette!")
                 break
             if user_email_request not in ('y','n'):
                 print("Please input a valid response. Try Again")
-
-#Password: vyc^Ed*el0E6
 
     except HTTPError as error:
         sys.exit(
